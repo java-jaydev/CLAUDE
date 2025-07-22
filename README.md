@@ -51,6 +51,16 @@ Claude AI를 위한 프로젝트 설정 및 가이드라인
 - 에러 코드 정의 및 관리
 - 글로벌 예외 처리
 
+## 🔧 Claude 설정
+
+이 프로젝트를 Claude Code와 함께 사용하려면:
+
+1. `.claude.example/settings.example.json`을 참고하여 개인 설정 생성
+2. `.claude/settings.local.json` 파일로 복사하여 개인 환경에 맞게 수정
+3. `CLAUDE.md` 파일이 프로젝트 가이드로 자동 로드됨
+
+**참고**: `.claude/` 폴더는 개인 설정이므로 Git에서 제외됩니다.
+
 ## 🚀 기술 스택
 
 ### Core Framework

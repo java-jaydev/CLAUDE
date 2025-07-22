@@ -1,0 +1,13 @@
+{
+  "projectInstructions": "CLAUDE.md",
+  "tools": {
+    "enabled": ["bash", "edit", "grep", "search"],
+    "bash": {
+      "timeout": 120000
+    }
+  },
+  "editor": {
+    "indentSize": 4,
+    "insertFinalNewline": true
+  }
+}
