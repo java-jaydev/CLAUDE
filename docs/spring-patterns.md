@@ -82,21 +82,6 @@ public class UserResponse {
 }
 ```
 
-### Validation 그룹화 (필요시)
-
-**기본 Validation**
-
-```java
-public class UserRequest {
-
-    @NotBlank(message = "이름은 필수입니다")
-    private String name;
-
-    @Email(message = "올바른 이메일 형식이 아닙니다")
-    @NotBlank(message = "이메일은 필수입니다")
-    private String email;
-}
-```
 
 ### 페이징 응답 DTO
 
@@ -388,7 +373,7 @@ public class PaymentService { ... }
 
 ### REST Controller 구조
 
-**기본 Controller 패턴**
+**기본 Controller 패턴 (Swagger 포함)**
 
 ```java
 @RestController
@@ -396,23 +381,69 @@ public class PaymentService { ... }
 @RequiredArgsConstructor
 @Validated
 @Slf4j
+@Tag(name = "사용자 관리", description = "사용자 관리 API")
 public class UserController {
 
     private final UserService userService;
 
+    @Operation(summary = "사용자 조회", description = "사용자 ID로 사용자 정보를 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<UserResponse>> getUser(
+            @Parameter(description = "사용자 ID", required = true, example = "1")
             @PathVariable @Positive Long id) {
         UserResponse user = userService.findById(id);
         return ResponseEntity.ok(CommonResponse.success(user));
     }
 
+    @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "등록 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+    })
     @PostMapping
     public ResponseEntity<CommonResponse<UserResponse>> createUser(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "사용자 등록 정보", 
+                required = true
+            )
             @RequestBody @Valid UserCreateRequest request) {
         UserResponse user = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(CommonResponse.success(user));
+    }
+
+    @Operation(summary = "사용자 목록 조회", description = "조건에 따라 사용자 목록을 페이징 조회합니다.")
+    @GetMapping
+    public ResponseEntity<CommonResponse<PageResponse<UserResponse>>> getUsers(
+            @Parameter(description = "검색 조건") @ModelAttribute UserSearchCondition condition,
+            @Parameter(hidden = true) Pageable pageable) {
+        Page<UserResponse> users = userService.findUsers(condition, pageable);
+        PageResponse<UserResponse> response = PageResponse.from(users);
+        return ResponseEntity.ok(CommonResponse.success(response));
+    }
+
+    @Operation(summary = "사용자 정보 수정", description = "현재 로그인한 사용자의 정보를 수정합니다.")
+    @PutMapping("/me")
+    public ResponseEntity<CommonResponse<UserResponse>> updateMyInfo(
+            @RequestBody @Valid UserUpdateRequest request,
+            @Parameter(hidden = true) Authentication authentication) {
+        UserResponse user = userService.updateMyInfo(request, authentication.getName());
+        return ResponseEntity.ok(CommonResponse.success(user));
+    }
+
+    @Operation(summary = "사용자 삭제", description = "관리자 권한으로 사용자를 삭제합니다.")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<CommonResponse<Void>> deleteUser(
+            @Parameter(description = "사용자 ID", required = true) @PathVariable Long id,
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) HttpServletRequest request,
+            @Parameter(hidden = true) HttpServletResponse response) {
+        userService.deleteUser(id, principal.getName());
+        return ResponseEntity.ok(CommonResponse.success());
     }
 }
 ```
