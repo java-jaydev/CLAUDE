@@ -187,7 +187,7 @@ public class AppInfoContributor implements InfoContributor {
     }
 
     private String getBuildTime() {
-        return LocalDateTime.now().toString();
+        return DateUtil.now();
     }
 }
 ```
@@ -665,9 +665,7 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage())
         );
 
-        String message = ex.getBindingResult().getFieldErrors().stream()
-            .map(error -> error.getField() + ": " + error.getDefaultMessage())
-            .collect(Collectors.joining(", "));
+        String message = StringUtil.formatValidationErrors(ex.getBindingResult());
 
         log.warn("Validation error: {}", message);
         
@@ -754,7 +752,7 @@ public class CommonResponse<T> {
             .success(true)
             .data(data)
             .message("요청이 성공적으로 처리되었습니다.")
-            .timestamp(LocalDateTime.now())
+            .timestamp(DateUtil.nowAsLocalDateTime())
             .build();
     }
 
@@ -763,7 +761,7 @@ public class CommonResponse<T> {
             .success(true)
             .data(data)
             .message(message)
-            .timestamp(LocalDateTime.now())
+            .timestamp(DateUtil.nowAsLocalDateTime())
             .build();
     }
 
@@ -771,7 +769,7 @@ public class CommonResponse<T> {
         return CommonResponse.<Void>builder()
             .success(true)
             .message("요청이 성공적으로 처리되었습니다.")
-            .timestamp(LocalDateTime.now())
+            .timestamp(DateUtil.nowAsLocalDateTime())
             .build();
     }
 
@@ -780,7 +778,7 @@ public class CommonResponse<T> {
             .success(false)
             .message(message)
             .errorCode(errorCode)
-            .timestamp(LocalDateTime.now())
+            .timestamp(DateUtil.nowAsLocalDateTime())
             .build();
     }
 
@@ -790,7 +788,7 @@ public class CommonResponse<T> {
             .message(message)
             .errorCode(errorCode)
             .data(data)
-            .timestamp(LocalDateTime.now())
+            .timestamp(DateUtil.nowAsLocalDateTime())
             .build();
     }
 }
@@ -809,9 +807,12 @@ public class DocumentationController {
     @GetMapping("/error-codes")
     @Operation(summary = "에러 코드 목록", description = "시스템에서 사용하는 모든 에러 코드를 조회합니다.")
     public ResponseEntity<CommonResponse<List<ErrorCodeResponse>>> getErrorCodes() {
-        List<ErrorCodeResponse> errorCodes = Arrays.stream(ErrorCode.values())
-            .map(ErrorCodeResponse::from)
-            .collect(Collectors.toList());
+        ErrorCode[] errorCodeValues = ErrorCode.values();
+        List<ErrorCodeResponse> errorCodes = CollectionUtil.isEmpty(Arrays.asList(errorCodeValues)) ?
+            Collections.emptyList() :
+            Arrays.stream(errorCodeValues)
+                .map(ErrorCodeResponse::from)
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(CommonResponse.success(errorCodes));
     }

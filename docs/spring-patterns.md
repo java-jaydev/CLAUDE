@@ -138,14 +138,16 @@ public class UserDetailResponse {
     private List<OrderSummaryResponse> recentOrders;  // 별도 DTO 참조
 
     public static UserDetailResponse from(User user, List<Order> recentOrders) {
-        List<OrderSummaryResponse> orderSummaries = recentOrders.stream()
-            .map(order -> OrderSummaryResponse.builder()
-                .orderId(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .status(order.getStatus())
-                .createdAt(order.getCreatedAt())
-                .build())
-            .collect(Collectors.toList());
+        List<OrderSummaryResponse> orderSummaries = CollectionUtil.isEmpty(recentOrders) ? 
+            Collections.emptyList() : 
+            recentOrders.stream()
+                .map(order -> OrderSummaryResponse.builder()
+                    .orderId(order.getId())
+                    .orderNumber(order.getOrderNumber())
+                    .status(order.getStatus())
+                    .createdAt(order.getCreatedAt())
+                    .build())
+                .collect(Collectors.toList());
 
         return UserDetailResponse.builder()
             .id(user.getId())
@@ -250,11 +252,11 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
     }
 
     private BooleanExpression nameContains(String name) {
-        return StringUtils.hasText(name) ? user.name.contains(name) : null;
+        return StringUtil.isNotEmpty(name) ? user.name.contains(name) : null;
     }
 
     private BooleanExpression emailContains(String email) {
-        return StringUtils.hasText(email) ? user.email.contains(email) : null;
+        return StringUtil.isNotEmpty(email) ? user.email.contains(email) : null;
     }
 
     private BooleanExpression statusEq(UserStatus status) {

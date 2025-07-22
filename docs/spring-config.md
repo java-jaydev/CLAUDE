@@ -477,7 +477,7 @@ CREATE INDEX idx_users_covering ON users(status, created_at) INCLUDE (id, name, 
 
 ### 보안 고려사항
 
-- **Password 암호화**: BCryptPasswordEncoder 사용하여 안전한 패스워드 저장
+- **Password 암호화**: PasswordUtil 사용하여 안전한 패스워드 저장 (내부적으로 BCryptPasswordEncoder 활용)
 - **JWT 토큰 관리**: Access Token(짧은 만료시간) + Refresh Token(Redis 저장) 조합
 - **CORS 설정**: 허용할 Origin, Method, Header 명시적 설정
 - **CSRF 보호**: RESTful API는 CSRF 비활성화, 상태 유지 애플리케이션은 활성화

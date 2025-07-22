@@ -91,6 +91,11 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(UserCreateRequest request) {
+        // ValidationUtil을 사용한 입력값 검증
+        if (!ValidationUtil.isValidEmail(request.getEmail())) {
+            throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다: " + request.getEmail());
+        }
+        
         validateDuplicateEmail(request.getEmail());
 
         User user = User.builder()
@@ -414,11 +419,11 @@ public class UserQueryRepository {
     }
 
     private BooleanExpression nameContains(String name) {
-        return StringUtils.hasText(name) ? user.name.contains(name) : null;
+        return StringUtil.isNotEmpty(name) ? user.name.contains(name) : null;
     }
 
     private BooleanExpression emailContains(String email) {
-        return StringUtils.hasText(email) ? user.email.contains(email) : null;
+        return StringUtil.isNotEmpty(email) ? user.email.contains(email) : null;
     }
 
     private BooleanExpression statusEq(UserStatus status) {
@@ -733,8 +738,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             "AUTHENTICATION_REQUIRED"
         );
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        response.getWriter().write(JsonUtil.toJson(errorResponse));
     }
 }
 ```
@@ -761,8 +765,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
             "ACCESS_DENIED"
         );
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        response.getWriter().write(JsonUtil.toJson(errorResponse));
     }
 }
 ```
@@ -804,11 +807,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
+        return JwtUtil.extractTokenFromRequest(request).orElse(null);
     }
 }
 ```

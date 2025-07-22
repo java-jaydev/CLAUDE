@@ -341,11 +341,17 @@ class UserQueryRepositoryTest {
     }
 
     private User createUser(String name, String email, UserStatus status) {
+        // ValidationUtil을 사용한 테스트 데이터 검증
+        if (StringUtil.isEmpty(name) || !ValidationUtil.isValidEmail(email)) {
+            throw new IllegalArgumentException("Invalid test data");
+        }
+        
         return User.builder()
             .name(name)
             .email(email)
             .status(status)
             .role(UserRole.USER)
+            .createdAt(DateUtil.nowAsLocalDateTime())
             .build();
     }
 }
@@ -416,7 +422,7 @@ class UserControllerTest {
         // When & Then
         mockMvc.perform(post("/api/v1/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                .content(JsonUtil.toJson(request)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.name").value("홍길동"))
@@ -438,7 +444,7 @@ class UserControllerTest {
         // When & Then
         mockMvc.perform(post("/api/v1/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
+                .content(JsonUtil.toJson(invalidRequest)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
